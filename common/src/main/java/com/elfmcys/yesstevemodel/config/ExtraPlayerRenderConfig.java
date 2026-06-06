@@ -1,20 +1,20 @@
 package com.elfmcys.yesstevemodel.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import rip.ysm.api.config.YsmConfigSpec;
 
 public class ExtraPlayerRenderConfig {
 
-    public static ForgeConfigSpec.BooleanValue DISABLE_PLAYER_RENDER;
+    public static YsmConfigSpec.BooleanValue DISABLE_PLAYER_RENDER;
 
-    public static ForgeConfigSpec.IntValue PLAYER_POS_X;
+    public static YsmConfigSpec.IntValue PLAYER_POS_X;
 
-    public static ForgeConfigSpec.IntValue PLAYER_POS_Y;
+    public static YsmConfigSpec.IntValue PLAYER_POS_Y;
 
-    public static ForgeConfigSpec.DoubleValue PLAYER_SCALE;
+    public static YsmConfigSpec.DoubleValue PLAYER_SCALE;
 
-    public static ForgeConfigSpec.DoubleValue PLAYER_YAW_OFFSET;
+    public static YsmConfigSpec.DoubleValue PLAYER_YAW_OFFSET;
 
-    public static void define(ForgeConfigSpec.Builder builder) {
+    public static void define(YsmConfigSpec.Builder builder) {
         builder.push("extra_player_render");
         builder.comment("Whether to display player");
         DISABLE_PLAYER_RENDER = builder.define("DisablePlayerRender", false);

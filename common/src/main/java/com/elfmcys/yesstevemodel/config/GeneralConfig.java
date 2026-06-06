@@ -1,46 +1,47 @@
 package com.elfmcys.yesstevemodel.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import rip.ysm.api.config.YsmConfigSpec;
+import rip.ysm.api.PlatformAPI;
 
 public class GeneralConfig {
 
-    public static ForgeConfigSpec.BooleanValue DISCLAIMER_SHOW;
+    public static YsmConfigSpec.BooleanValue DISCLAIMER_SHOW;
 
-    public static ForgeConfigSpec.BooleanValue PRINT_ANIMATION_ROULETTE_MSG;
+    public static YsmConfigSpec.BooleanValue PRINT_ANIMATION_ROULETTE_MSG;
 
-    public static ForgeConfigSpec.BooleanValue DISABLE_SELF_MODEL;
+    public static YsmConfigSpec.BooleanValue DISABLE_SELF_MODEL;
 
-    public static ForgeConfigSpec.BooleanValue DISABLE_OTHER_MODEL;
+    public static YsmConfigSpec.BooleanValue DISABLE_OTHER_MODEL;
 
-    public static ForgeConfigSpec.BooleanValue DISABLE_SELF_HANDS;
+    public static YsmConfigSpec.BooleanValue DISABLE_SELF_HANDS;
 
-    public static ForgeConfigSpec.BooleanValue DISABLE_PROJECTILE_MODEL;
+    public static YsmConfigSpec.BooleanValue DISABLE_PROJECTILE_MODEL;
 
-    public static ForgeConfigSpec.BooleanValue DISABLE_VEHICLE_MODEL;
+    public static YsmConfigSpec.BooleanValue DISABLE_VEHICLE_MODEL;
 
-    public static ForgeConfigSpec.BooleanValue DISABLE_EXTERNAL_FP_ANIM;
+    public static YsmConfigSpec.BooleanValue DISABLE_EXTERNAL_FP_ANIM;
 
-    public static ForgeConfigSpec.BooleanValue USE_COMPATIBILITY_RENDERER;
+    public static YsmConfigSpec.BooleanValue USE_COMPATIBILITY_RENDERER;
 
-    public static ForgeConfigSpec.DoubleValue SOUND_VOLUME;
+    public static YsmConfigSpec.DoubleValue SOUND_VOLUME;
 
-    public static ForgeConfigSpec.BooleanValue SHOW_MODEL_ID_FIRST;
+    public static YsmConfigSpec.BooleanValue SHOW_MODEL_ID_FIRST;
 
-    public static ForgeConfigSpec.BooleanValue SOPHISTICATEDBACKPACK;
+    public static YsmConfigSpec.BooleanValue SOPHISTICATEDBACKPACK;
 
-    public static ForgeConfigSpec.BooleanValue PARCOOL;
+    public static YsmConfigSpec.BooleanValue PARCOOL;
 
-    public static ForgeConfigSpec.BooleanValue USE_GPU_RENDERER;
+    public static YsmConfigSpec.BooleanValue USE_GPU_RENDERER;
 
-    public static ForgeConfigSpec.EnumValue<RouletteSettingsMode> ROULETTE_SETTINGS_MODE;
+    public static YsmConfigSpec.EnumValue<RouletteSettingsMode> ROULETTE_SETTINGS_MODE;
 
-    public static ForgeConfigSpec.EnumValue<RouletteMode> ROULETTE_MODE;
+    public static YsmConfigSpec.EnumValue<RouletteMode> ROULETTE_MODE;
 
-    public static ForgeConfigSpec.BooleanValue BLUR_GUI;
+    public static YsmConfigSpec.BooleanValue BLUR_GUI;
 
-    public static ForgeConfigSpec.EnumValue<TextureScreenMode> TEXTURE_SCREEN_MODE;
+    public static YsmConfigSpec.EnumValue<TextureScreenMode> TEXTURE_SCREEN_MODE;
 
-    public static ForgeConfigSpec.EnumValue<ModelInfoScreenMode> MODEL_INFO_SCREEN_MODE;
+    public static YsmConfigSpec.EnumValue<ModelInfoScreenMode> MODEL_INFO_SCREEN_MODE;
 
     public enum RouletteSettingsMode {
         MODERN,
@@ -67,15 +68,15 @@ public class GeneralConfig {
         return ROULETTE_MODE.get() == RouletteMode.MODERN && ROULETTE_SETTINGS_MODE.get() == RouletteSettingsMode.MODERN;
     }
 
-    public static ForgeConfigSpec buildSpec() {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+    public static YsmConfigSpec buildSpec() {
+        YsmConfigSpec.Builder builder = new YsmConfigSpec.Builder();
         defineGeneral(builder);
         ExtraPlayerRenderConfig.define(builder);
         LoadingStateConfig.define(builder);
         return builder.build();
     }
 
-    public static void defineGeneral(ForgeConfigSpec.Builder builder) {
+    public static void defineGeneral(YsmConfigSpec.Builder builder) {
         builder.push("general");
         builder.comment("Whether to display disclaimer GUI");
         DISCLAIMER_SHOW = builder.define("DisclaimerShow", true);
@@ -94,7 +95,7 @@ public class GeneralConfig {
         builder.comment("Disable first person animation from other mods.");
         DISABLE_EXTERNAL_FP_ANIM = builder.define("DisableExternalFirstPersonAnim", false);
         builder.comment("If rendering errors occur, try turning on this.");
-        USE_COMPATIBILITY_RENDERER = builder.define("UseCompatibilityRenderer", false);
+        USE_COMPATIBILITY_RENDERER = builder.define("UseCompatibilityRenderer", "neoforge".equalsIgnoreCase(PlatformAPI.getPlatformName()));
         builder.comment("Test renderer.");
         USE_GPU_RENDERER = builder.define("UseGpuRenderer", true);
         ROULETTE_SETTINGS_MODE = builder.defineEnum("RouletteSettingsMode", RouletteSettingsMode.MODERN);

@@ -1,6 +1,8 @@
 package com.elfmcys.yesstevemodel.geckolib3.core.processor;
 
+import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.audio.AudioPlayerManager;
+import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.geckolib3.core.manager.AnimationData;
 import com.elfmcys.yesstevemodel.geckolib3.core.controller.IAnimationController;
 import com.elfmcys.yesstevemodel.geckolib3.geo.animated.AnimatedGeoModel;
@@ -67,6 +69,7 @@ public class AnimationProcessor<TEntity extends Entity> {
     private ExpressionEvaluator<AnimationContext<?>> currentEvaluator;
     private float currentSeekTime;
     private boolean currentDeprecatedMode;
+    private String currentControllerName;
     private final EulerNlerpScratch rotScratch = new EulerNlerpScratch();
 
     public AnimationProcessor(AnimatableEntity<TEntity> animatable) {
@@ -97,9 +100,11 @@ public class AnimationProcessor<TEntity extends Entity> {
                 controller.process(event, evaluator, z2);
             }
             this.currentDeprecatedMode = controller.isDeprecatedMode();
+            this.currentControllerName = controller.getName();
             controller.forEachTransform(this.transformConsumer);
         }
         this.currentEvaluator = null;
+        this.currentControllerName = null;
         this.needsInit = false;
         Iterator<BoneTopLevelSnapshot> iterator = this.modelRendererList.iterator();
         while (iterator.hasNext()) {
@@ -209,6 +214,33 @@ public class AnimationProcessor<TEntity extends Entity> {
             snapshot.mostRecentResetScaleTick = seekTime;
             scale.applyLinearBlendTo(snapshot.scale);
         }
+
+        if ("player.main".equals(this.currentControllerName) && this.animatable instanceof PlayerCapability cap && cap.shouldLogTransformDebug()) {
+            YesSteveModel.LOGGER.info(
+                    "[YSM-MOVE] transform-apply player={} tick={} seekTime={} controller={} bone={} rot={} rotOut=({}, {}, {}) pos={} posOut=({}, {}, {}) scale={} scaleOut=({}, {}, {}) deprecated={}",
+                    cap.getEntity().getGameProfile().getName(),
+                    cap.getEntity().tickCount,
+                    seekTime,
+                    this.currentControllerName,
+                    snapshot.bone.getName(),
+                    rot != null ? vectorToString(rot) : "null",
+                    snapshot.rotation.x,
+                    snapshot.rotation.y,
+                    snapshot.rotation.z,
+                    pos != null ? vectorToString(pos) : "null",
+                    snapshot.position.x,
+                    snapshot.position.y,
+                    snapshot.position.z,
+                    scale != null ? vectorToString(scale) : "null",
+                    snapshot.scale.x,
+                    snapshot.scale.y,
+                    snapshot.scale.z,
+                    this.currentDeprecatedMode);
+        }
+    }
+
+    private static String vectorToString(Vector3f vector) {
+        return "(" + vector.x + ", " + vector.y + ", " + vector.z + ")";
     }
 
     @Nullable

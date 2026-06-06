@@ -1,6 +1,8 @@
 package com.elfmcys.yesstevemodel.geckolib3.core;
 
+import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.audio.IAudioStreamFactory;
+import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.client.event.ClientTickEvent;
 import com.elfmcys.yesstevemodel.geckolib3.core.enums.AnimationState;
 import com.elfmcys.yesstevemodel.geckolib3.geo.animated.AnimatedGeoModel;
@@ -17,6 +19,7 @@ import com.elfmcys.yesstevemodel.geckolib3.core.molang.storage.IForeignVariableS
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.value.IValue;
 import com.elfmcys.yesstevemodel.geckolib3.core.processor.AnimationProcessor;
 import com.elfmcys.yesstevemodel.geckolib3.core.processor.IBone;
+import com.elfmcys.yesstevemodel.geckolib3.util.MovementQuery;
 import com.elfmcys.yesstevemodel.geckolib3.model.provider.data.EntityModelData;
 import com.elfmcys.yesstevemodel.client.entity.IPreviewAnimatable;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.context.AnimationContext;
@@ -223,14 +226,32 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
         }
         Entity entity = this.entity;
         LivingEntity livingEntity = entity instanceof LivingEntity ? (LivingEntity) entity : null;
+        PlayerCapability playerCapability = this instanceof PlayerCapability cap ? cap : null;
         int tickCount = this instanceof IPreviewAnimatable ? ClientTickEvent.getTickCount() : entity.tickCount;
         float frameTime = partialTick != 1.0f ? partialTick : Minecraft.getInstance().getTimer().getGameTimeDeltaTicks();
         boolean shouldSit = entity.isPassenger() && entity.getVehicle() != null && EntityDataBridge.shouldRiderSit(entity.getVehicle());
         float limbSwingAmount = 0.0f;
         float limbSwing = 0.0f;
+        float movementFallbackSpeed = 0.0f;
+        String movementSource = "none";
         if (!shouldSit && entity.isAlive() && livingEntity != null) {
-            limbSwingAmount = livingEntity.walkAnimation.speed(partialTick);
-            limbSwing = livingEntity.walkAnimation.position(partialTick);
+            if (playerCapability != null && playerCapability.hasRenderState()) {
+                limbSwingAmount = playerCapability.getRenderStateWalkAnimationSpeed();
+                limbSwing = playerCapability.getRenderStateWalkAnimationPos();
+                movementSource = "render_state";
+            } else {
+                limbSwingAmount = livingEntity.walkAnimation.speed(partialTick);
+                limbSwing = livingEntity.walkAnimation.position(partialTick);
+                movementSource = "walk_animation";
+            }
+            if (Math.abs(limbSwingAmount) <= MovementQuery.EPSILON) {
+                movementFallbackSpeed = Mth.clamp(MovementQuery.getGroundSpeed(entity, this.positionTracker, null), 0.0f, 1.0f);
+                if (movementFallbackSpeed > MovementQuery.EPSILON) {
+                    limbSwingAmount = movementFallbackSpeed;
+                    limbSwing = this.seekTime * 0.6662f;
+                    movementSource = "fallback";
+                }
+            }
             if (livingEntity.isBaby()) {
                 limbSwing *= 3.0f;
             }
@@ -241,7 +262,12 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
         float lerpBodyRot = 0.0f;
         float lerpHeadRot = 0.0f;
         float netHeadYaw = 0.0f;
-        if (livingEntity != null) {
+        if (playerCapability != null && playerCapability.hasRenderState()) {
+            modelData.isChild = livingEntity != null && livingEntity.isBaby();
+            lerpBodyRot = playerCapability.getRenderStateBodyRot();
+            netHeadYaw = playerCapability.getRenderStateNetHeadYaw();
+            lerpHeadRot = lerpBodyRot + netHeadYaw;
+        } else if (livingEntity != null) {
             modelData.isChild = livingEntity.isBaby();
             lerpBodyRot = Mth.rotLerp(partialTick, livingEntity.yBodyRotO, livingEntity.yBodyRot);
             lerpHeadRot = Mth.rotLerp(partialTick, livingEntity.yHeadRotO, livingEntity.yHeadRot);
@@ -260,13 +286,32 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
 
             netHeadYaw = lerpHeadRot - lerpBodyRot;
         }
-        modelData.rawHeadPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+        modelData.rawHeadPitch = playerCapability != null && playerCapability.hasRenderState()
+                ? playerCapability.getRenderStateHeadPitch()
+                : Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
         modelData.headPitch = -modelData.rawHeadPitch;
         modelData.rawNetHeadYaw = netHeadYaw;
         modelData.netHeadYaw = -Mth.clamp(Mth.wrapDegrees(netHeadYaw), -85.0f, 85.0f);
         modelData.lerpBodyRot = lerpBodyRot;
         modelData.lerpedAge = tickCount + partialTick;
-        AnimationEvent<AnimatableEntity<TEntity>> event = new AnimationEvent<>(this, limbSwing, limbSwingAmount, tickCount, partialTick, frameTime, limbSwingAmount <= (-getScale()) || limbSwingAmount <= getScale(), z, modelData);
+        AnimationEvent<AnimatableEntity<TEntity>> event = new AnimationEvent<>(this, limbSwing, limbSwingAmount, tickCount, partialTick, frameTime, Math.abs(limbSwingAmount) > MovementQuery.EPSILON, z, modelData);
+        if (playerCapability != null && playerCapability.shouldLogAnimationSampleDebug()) {
+            YesSteveModel.LOGGER.info(
+                    "[YSM-MOVE] anim-sample player={} tick={} source={} limbSwing={} limbAmount={} fallback={} isMoving={} pose={} onGround={} xxa={} yya={} zza={} renderState={}",
+                    playerCapability.getEntity().getGameProfile().getName(),
+                    tickCount,
+                    movementSource,
+                    limbSwing,
+                    limbSwingAmount,
+                    movementFallbackSpeed,
+                    event.isMoving(),
+                    entity.getPose(),
+                    entity.onGround(),
+                    livingEntity != null ? livingEntity.xxa : 0.0f,
+                    livingEntity != null ? livingEntity.yya : 0.0f,
+                    livingEntity != null ? livingEntity.zza : 0.0f,
+                    playerCapability.hasRenderState());
+        }
         AnimationContext<?> context = new AnimationContext<>(entity, this, event, modelData);
         context.setLogger(getLogger());
         setCustomAnimations(context, event);
@@ -297,19 +342,34 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
             }
         }
         event.currentTick = this.seekTime;
+        this.positionTracker.updateState(event.getTickCount(), this.seekTime, event.getFrameTime());
         if (!this.animationProcessor.isDisabled()) {
             this.isTickTriggered |= this.rateLimiter.request(this.seekTime / 20.0f);
             boolean z2 = (this.isTickTriggered && !this.hasUpdatedThisTick) || this.wasAnimationActiveLastTick || z;
             boolean z3 = (!z || (this.seekTime == 0.0f && !this.hasUpdatedThisTick)) && this.isTickTriggered && !this.hasUpdatedThisTick;
             resetHeadTracking(this.wasEvaluatedLastFrame);
+            if (this instanceof PlayerCapability playerCapability && playerCapability.shouldLogControllerDebug()) {
+                YesSteveModel.LOGGER.info(
+                        "[YSM-MOVE] anim-gate player={} tick={} seekTime={} active={} evaluate={} fresh={} tickTriggered={} updatedThisTick={} wasActive={} controllerCount={} boneDisabled={}",
+                        playerCapability.getEntity().getGameProfile().getName(),
+                        event.getTickCount(),
+                        this.seekTime,
+                        z,
+                        z2,
+                        z3,
+                        this.isTickTriggered,
+                        this.hasUpdatedThisTick,
+                        this.wasAnimationActiveLastTick,
+                        this.manager.getAnimationControllers().size(),
+                        this.animationProcessor.isDisabled());
+            }
             if (z2) {
                 if (z3) {
                     this.hasUpdatedThisTick = true;
-                    this.positionTracker.updateState(event.getTickCount(), this.seekTime, event.getFrameTime());
                 }
                 getPhysicsManager().update(this.seekTime);
                 setupAnim(this.seekTime, z3);
-                getEvaluationContext().tickAnimation(event, ctx, z3, shouldRenderOverlay());
+                getEvaluationContext().tickAnimation(event, ctx, z || z3, shouldRenderOverlay());
                 afterSetupAnim(this.seekTime, z3);
                 this.wasAnimationActiveLastTick = z;
             }

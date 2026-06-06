@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.geckolib3.core.controller;
 
+import com.elfmcys.yesstevemodel.YesSteveModel;
+import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.client.animation.IAnimationPredicate;
 import com.elfmcys.yesstevemodel.geckolib3.core.builder.AnimationController;
 import com.elfmcys.yesstevemodel.geckolib3.core.AnimatableEntity;
@@ -73,6 +75,16 @@ public class CompositeAnimationController<T extends AnimatableEntity<?>> impleme
     public void process(AnimationEvent<T> event, ExpressionEvaluator<AnimationContext<?>> evaluator, boolean z) {
         if (this.initialized) {
             this.animationRuntime.process(event, evaluator, z);
+            if ("player.main".equals(this.name) && this.animatable instanceof PlayerCapability cap && cap.shouldLogControllerPathDebug()) {
+                YesSteveModel.LOGGER.info(
+                        "[YSM-MOVE] controller-path player={} tick={} controller={} initialized=true runtimeBuiltin={} runtimeCurrent={} activeBefore={}",
+                        cap.getEntity().getGameProfile().getName(),
+                        cap.getEntity().tickCount,
+                        this.name,
+                        this.animationRuntime.isBuiltinAnimation(),
+                        this.animationRuntime.getCurrentAnimation(),
+                        this.activeController.getClass().getSimpleName());
+            }
             if (this.animationRuntime.isBuiltinAnimation()) {
                 if (this.activeController != this.controller) {
                     this.controller.setInterpolator(this.animationRuntime.getCurrentEntry().getBlendTransition().asInterpolator());
@@ -88,6 +100,14 @@ public class CompositeAnimationController<T extends AnimatableEntity<?>> impleme
                 return;
             }
             return;
+        }
+        if ("player.main".equals(this.name) && this.animatable instanceof PlayerCapability cap && cap.shouldLogControllerPathDebug()) {
+            YesSteveModel.LOGGER.info(
+                    "[YSM-MOVE] controller-path player={} tick={} controller={} initialized=false active={}",
+                    cap.getEntity().getGameProfile().getName(),
+                    cap.getEntity().tickCount,
+                    this.name,
+                    this.activeController.getClass().getSimpleName());
         }
         this.controller.process(event, evaluator, z);
     }

@@ -39,7 +39,12 @@ public class ReplacePlayerRenderEvent {
                         || GeneralConfig.DISABLE_EXTERNAL_FP_ANIM.get().booleanValue()
                         || !PlayerAnimatorCompat.isPlayerAnimated(localPlayer)) {
                     cancelled[0] = true;
-                    RendererManager.getPlayerRenderer().render(entity, entity.getYRot(), partialTick, poseStack, bufferSource, packedLight);
+                    cap.beginRenderState(partialTick);
+                    try {
+                        RendererManager.getPlayerRenderer().render(entity, entity.getYRot(), partialTick, poseStack, bufferSource, packedLight);
+                    } finally {
+                        cap.endRenderState();
+                    }
                 }
             }
         });

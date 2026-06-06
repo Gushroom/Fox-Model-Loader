@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+logoFile="yesstevemodel.png"
+
+[[mods]]
+modId="yes_steve_model"
+version="${version}"
+displayName="Fox Model Loader"
+authors="Micaftic"
+description='''Originally based on OpenYSM.'''
+
+[[mixins]]
+config="yes_steve_model.mixins.json"
+
+[[dependencies.yes_steve_model]]
+modId="neoforge"
+type="required"
+versionRange="[${neo_version},)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.yes_steve_model]]
+modId="minecraft"
+type="required"
+versionRange="[${minecraft_version},1.22)"
+ordering="NONE"
+side="BOTH"

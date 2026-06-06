@@ -1,0 +1,125 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.github.juuxel",
+    "module": "unprotect",
+    "version": "2.0.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-tree",
+          "version": {
+            "requires": "6.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "unprotect-2.0.2.jar",
+          "url": "unprotect-2.0.2.jar",
+          "size": 16453,
+          "sha512": "027c4b53f5dd42789187e17278ec1b6f351fba9749e18f5d3cfb111a349ba1eb42374d11c46c9f19a44e10e41538e64115fe0b22cfc8e8af29fda42d6ae451ba",
+          "sha256": "8599e4a56278a52c51b198169d0f4d276444de12efd919d75b8d85d04f2cd59a",
+          "sha1": "d79e894ec170237a02281b45e3203df6306675d6",
+          "md5": "c6d620b429641ac1108cb4566b78d382"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.apache.logging.log4j",
+          "module": "log4j-api",
+          "version": {
+            "requires": "2.11.2"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-tree",
+          "version": {
+            "requires": "6.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "unprotect-2.0.2.jar",
+          "url": "unprotect-2.0.2.jar",
+          "size": 16453,
+          "sha512": "027c4b53f5dd42789187e17278ec1b6f351fba9749e18f5d3cfb111a349ba1eb42374d11c46c9f19a44e10e41538e64115fe0b22cfc8e8af29fda42d6ae451ba",
+          "sha256": "8599e4a56278a52c51b198169d0f4d276444de12efd919d75b8d85d04f2cd59a",
+          "sha1": "d79e894ec170237a02281b45e3203df6306675d6",
+          "md5": "c6d620b429641ac1108cb4566b78d382"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "unprotect-2.0.2-sources.jar",
+          "url": "unprotect-2.0.2-sources.jar",
+          "size": 6231,
+          "sha512": "1536e5dc19e3fcb199dca9cbaa9830bd8e6d81ba6f0ae6468150dcccd3fc6ac1d9ce4910b1a36120d60b6d17db056223bb0c3e754a5e8f314ad1f089e8f5cfd6",
+          "sha256": "27f58d49f97c5389b91fb3a9b2a9044a052c9ba69de039c9759848fcfbd2042e",
+          "sha1": "5db9d2c4ec254c68458a882698a774cbcd25d9b4",
+          "md5": "a23bf6e0a2a28b4e3dbae817386f6abc"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "unprotect-2.0.2-javadoc.jar",
+          "url": "unprotect-2.0.2-javadoc.jar",
+          "size": 89276,
+          "sha512": "473380db2fff344b0f2643fabed084c73413af17ce32ac3f7448c80e0d4bd753dbaaa4a37845e459fe8a9b9588c8eaf940f1ecbf570cad6e0efce3bf95882b58",
+          "sha256": "9e3867571abba498f12762f5d4e3b89387dfcccbe304702385cbbb854b001ea2",
+          "sha1": "f950f15a149f1f717457e70c013ad37554910389",
+          "md5": "61405aca21d9a5ca2e20da9262bec0ca"
+        }
+      ]
+    }
+  ]
+}

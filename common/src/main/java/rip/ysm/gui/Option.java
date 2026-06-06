@@ -1,7 +1,7 @@
 package rip.ysm.gui;
 
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.common.ForgeConfigSpec;
+import rip.ysm.api.config.YsmConfigSpec;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -21,15 +21,15 @@ public class Option<T> {
         this.pending = getter.get();
     }
 
-    public static Option<Boolean> ofBoolean(String key, ForgeConfigSpec.BooleanValue cfg) {
+    public static Option<Boolean> ofBoolean(String key, YsmConfigSpec.BooleanValue cfg) {
         return new Option<>(key, cfg::get, cfg::set);
     }
 
-    public static Option<Double> ofDouble(String key, ForgeConfigSpec.DoubleValue cfg) {
+    public static Option<Double> ofDouble(String key, YsmConfigSpec.DoubleValue cfg) {
         return new Option<>(key, cfg::get, cfg::set);
     }
 
-    public static <E extends Enum<E>> Option<E> ofEnum(String key, ForgeConfigSpec.EnumValue<E> cfg) {
+    public static <E extends Enum<E>> Option<E> ofEnum(String key, YsmConfigSpec.EnumValue<E> cfg) {
         return new Option<>(key, cfg::get, cfg::set);
     }
 

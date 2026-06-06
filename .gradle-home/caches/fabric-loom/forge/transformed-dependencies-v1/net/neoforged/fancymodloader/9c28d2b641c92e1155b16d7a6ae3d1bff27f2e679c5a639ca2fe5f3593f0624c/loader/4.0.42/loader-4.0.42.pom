@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>net.neoforged.fancymodloader.9c28d2b641c92e1155b16d7a6ae3d1bff27f2e679c5a639ca2fe5f3593f0624c</groupId>
+	<artifactId>loader</artifactId>
+	<version>4.0.42</version>
+</project>

@@ -22,10 +22,10 @@ import com.elfmcys.yesstevemodel.geckolib3.core.molang.context.IContext;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.util.StringPool;
 import com.elfmcys.yesstevemodel.client.entity.IPreviewAnimatable;
 import com.elfmcys.yesstevemodel.geckolib3.core.EntityFrameStateTracker;
+import com.elfmcys.yesstevemodel.geckolib3.util.MovementQuery;
 import com.elfmcys.yesstevemodel.util.data.LazySupplier;
 import rip.ysm.compat.create.CreateCompat;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
@@ -44,20 +44,20 @@ public class CtrlBinding extends ContextBinding {
         registerLivingEntityState("riptide", Priority.HIGHEST, LivingEntity::isAutoSpinAttack);
         registerLivingEntityState("sleep", Priority.HIGHEST, entity -> entity.getPose() == Pose.SLEEPING);
         registerLivingEntityState("swim", Priority.HIGHEST, Entity::isSwimming);
-        registerLivingEntityState("climb", Priority.HIGHEST, entity -> entity.getPose() == Pose.SWIMMING && isWalking(entity));
+        registerState("climb", Priority.HIGHEST, ctx -> ctx.entity().getPose() == Pose.SWIMMING && isWalking(ctx));
         registerLivingEntityState("climbing", Priority.HIGHEST, entity -> entity.getPose() == Pose.SWIMMING);
-        registerLivingEntityState("ladder_up", Priority.HIGHEST, entity -> entity.onClimbable() && getVerticalVelocity(entity) > 0.0f);
-        registerLivingEntityState("ladder_stillness", Priority.HIGHEST, entity -> entity.onClimbable() && getVerticalVelocity(entity) == 0.0f);
-        registerLivingEntityState("ladder_down", Priority.HIGHEST, entity -> entity.onClimbable() && getVerticalVelocity(entity) < 0.0f);
+        registerState("ladder_up", Priority.HIGHEST, ctx -> ctx.entity().onClimbable() && getVerticalVelocity(ctx) > 0.0f);
+        registerState("ladder_stillness", Priority.HIGHEST, ctx -> ctx.entity().onClimbable() && getVerticalVelocity(ctx) == 0.0f);
+        registerState("ladder_down", Priority.HIGHEST, ctx -> ctx.entity().onClimbable() && getVerticalVelocity(ctx) < 0.0f);
         registerState("fly", Priority.HIGH, CtrlBinding::isFlying);
         registerLivingEntityState("elytra_fly", Priority.HIGH, entity -> entity.getPose() == Pose.FALL_FLYING && entity.isFallFlying());
         registerLivingEntityState("swim_stand", Priority.NORMAL, entity -> entity.isInWater() && !entity.onGround());
         registerLivingEntityState("attacked", Priority.NORMAL, entity -> entity.hurtTime > 0);
         registerLivingEntityState("jump", Priority.NORMAL, entity -> !entity.onGround() && !entity.isInWater());
-        registerLivingEntityState("sneak", Priority.NORMAL, entity -> entity.onGround() && entity.getPose() == Pose.CROUCHING && isWalking(entity));
+        registerState("sneak", Priority.NORMAL, ctx -> ctx.entity().onGround() && ctx.entity().getPose() == Pose.CROUCHING && isWalking(ctx));
         registerLivingEntityState("sneaking", Priority.NORMAL, entity -> entity.onGround() && entity.getPose() == Pose.CROUCHING);
         registerLivingEntityState("run", Priority.LOWEST, entity -> entity.onGround() && entity.isSprinting());
-        registerLivingEntityState("walk", Priority.LOWEST, entity -> entity.onGround() && isWalking(entity));
+        registerState("walk", Priority.LOWEST, ctx -> ctx.entity().onGround() && isWalking(ctx));
         registerLivingEntityState("idle", Priority.LOWEST, entity -> true);
 
         var("playing_extra_animation", CtrlBinding::isPlayingExtraAnimation);
@@ -144,12 +144,13 @@ public class CtrlBinding extends ContextBinding {
         return false;
     }
 
-    private static boolean isWalking(LivingEntity livingEntity) {
-        return Math.abs(livingEntity.walkAnimation.speed(Minecraft.getInstance().getTimer().getGameTimeDeltaTicks())) > 0.05f;
+    private static boolean isWalking(IContext<LivingEntity> context) {
+        return Math.abs(context.animationEvent().getLimbSwingAmount()) > 0.05f
+                || MovementQuery.getGroundSpeed(context.entity(), context.geoInstance().getPositionTracker(), context.animationEvent()) > 0.05f;
     }
 
-    private static float getVerticalVelocity(LivingEntity livingEntity) {
-        return 20.0f * ((float) (livingEntity.position().y - livingEntity.yo));
+    private static float getVerticalVelocity(IContext<LivingEntity> context) {
+        return MovementQuery.getVerticalSpeed(context.entity(), context.geoInstance().getPositionTracker());
     }
 
     private static boolean isFlying(IContext<LivingEntity> context) {

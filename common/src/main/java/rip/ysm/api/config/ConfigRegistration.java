@@ -1,15 +1,18 @@
 package rip.ysm.api.config;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
-import net.minecraftforge.fml.config.ModConfig;
 
 public final class ConfigRegistration {
+    public enum Type {
+        CLIENT,
+        SERVER
+    }
 
     private ConfigRegistration() {
     }
 
     @ExpectPlatform
-    public static void register(String modId, ModConfig.Type type, Object spec) {
+    public static void register(String modId, Type type, YsmConfigSpec spec) {
         throw new AssertionError();
     }
 }

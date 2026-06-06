@@ -1,37 +1,37 @@
 package com.elfmcys.yesstevemodel.config;
 
 import com.google.common.collect.Lists;
-import net.minecraftforge.common.ForgeConfigSpec;
+import rip.ysm.api.config.YsmConfigSpec;
 
 import java.util.List;
 
 public class ServerConfig {
 
-    public static ForgeConfigSpec.IntValue THREAD_COUNT;
+    public static YsmConfigSpec.IntValue THREAD_COUNT;
 
-    public static ForgeConfigSpec.IntValue BANDWIDTH_LIMIT;
+    public static YsmConfigSpec.IntValue BANDWIDTH_LIMIT;
 
-    public static ForgeConfigSpec.IntValue PLAYER_SYNC_TIMEOUT;
+    public static YsmConfigSpec.IntValue PLAYER_SYNC_TIMEOUT;
 
-    public static ForgeConfigSpec.BooleanValue LOW_BANDWIDTH_USAGE;
+    public static YsmConfigSpec.BooleanValue LOW_BANDWIDTH_USAGE;
 
-    public static ForgeConfigSpec.BooleanValue CAN_SWITCH_MODEL;
+    public static YsmConfigSpec.BooleanValue CAN_SWITCH_MODEL;
 
-    public static ForgeConfigSpec.ConfigValue<String> DEFAULT_MODEL_ID;
+    public static YsmConfigSpec.ConfigValue<String> DEFAULT_MODEL_ID;
 
-    public static ForgeConfigSpec.ConfigValue<String> DEFAULT_MODEL_TEXTURE;
+    public static YsmConfigSpec.ConfigValue<String> DEFAULT_MODEL_TEXTURE;
 
-    public static ForgeConfigSpec.IntValue ACCEPT_SOUND_FX;
+    public static YsmConfigSpec.IntValue ACCEPT_SOUND_FX;
 
-    public static ForgeConfigSpec.ConfigValue<List<String>> CLIENT_NOT_DISPLAY_MODELS;
+    public static YsmConfigSpec.ConfigValue<List<String>> CLIENT_NOT_DISPLAY_MODELS;
 
-    public static ForgeConfigSpec buildSpec() {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+    public static YsmConfigSpec buildSpec() {
+        YsmConfigSpec.Builder builder = new YsmConfigSpec.Builder();
         defineOptions(builder);
         return builder.build();
     }
 
-    private static void defineOptions(ForgeConfigSpec.Builder builder) {
+    private static void defineOptions(YsmConfigSpec.Builder builder) {
         builder.comment("The default model ID when a player first enters the game");
         DEFAULT_MODEL_ID = builder.define("DefaultModelId", "default");
         builder.comment("The default model texture when a player first enters the game");

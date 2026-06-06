@@ -1,12 +1,12 @@
 package com.elfmcys.yesstevemodel.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import rip.ysm.api.config.YsmConfigSpec;
 
 public class LoadingStateConfig {
 
-    public static ForgeConfigSpec.BooleanValue DISABLE_LOADING_STATE_SCREEN;
+    public static YsmConfigSpec.BooleanValue DISABLE_LOADING_STATE_SCREEN;
 
-    public static ForgeConfigSpec.EnumValue<Position> LOADING_STATE_POSITION;
+    public static YsmConfigSpec.EnumValue<Position> LOADING_STATE_POSITION;
 
     public enum Position {
         TOP_LEFT,
@@ -17,7 +17,7 @@ public class LoadingStateConfig {
         BOTTOM_RIGHT
     }
 
-    public static void define(ForgeConfigSpec.Builder builder) {
+    public static void define(YsmConfigSpec.Builder builder) {
         builder.push("loading_state_screen");
         builder.comment("Whether to disable loading state screen");
         DISABLE_LOADING_STATE_SCREEN = builder.define("DisableLoadingStateScreen", false);

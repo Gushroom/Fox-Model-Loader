@@ -5,6 +5,7 @@ import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
 import com.elfmcys.yesstevemodel.geckolib3.core.AnimatableEntity;
 import com.elfmcys.yesstevemodel.geckolib3.core.builder.ILoopType;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
+import com.elfmcys.yesstevemodel.geckolib3.util.MovementQuery;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 
@@ -20,9 +21,9 @@ public class AnimationRegister {
         register("swim", Priority.HIGHEST, (player, event) -> player.isSwimming());
         register("climb", Priority.HIGHEST, (player, event) -> player.getPose() == Pose.SWIMMING && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
         register("climbing", Priority.HIGHEST, (player, event) -> player.getPose() == Pose.SWIMMING);
-        register("ladder_up", Priority.HIGHEST, (player, event) -> player.onClimbable() && getVerticalSpeed(player) > 0.0f);
-        register("ladder_stillness", Priority.HIGHEST, (player, event) -> player.onClimbable() && getVerticalSpeed(player) == 0.0f);
-        register("ladder_down", Priority.HIGHEST, (player, event) -> player.onClimbable() && getVerticalSpeed(player) < 0.0f);
+        register("ladder_up", Priority.HIGHEST, (player, event) -> player.onClimbable() && getVerticalSpeed(event) > 0.0f);
+        register("ladder_stillness", Priority.HIGHEST, (player, event) -> player.onClimbable() && getVerticalSpeed(event) == 0.0f);
+        register("ladder_down", Priority.HIGHEST, (player, event) -> player.onClimbable() && getVerticalSpeed(event) < 0.0f);
         register("fly", Priority.HIGH, (player, event) -> {
             AnimatableEntity<Player> animatable = event.getAnimatable();
             if (animatable instanceof PlayerCapability cap) {
@@ -51,7 +52,8 @@ public class AnimationRegister {
         register(animationName, ILoopType.EDefaultLoopTypes.LOOP, priority, predicate);
     }
 
-    private static float getVerticalSpeed(Player player) {
-        return 20.0f * ((float) (player.position().y - player.yo));
+    private static float getVerticalSpeed(AnimationEvent<CustomPlayerEntity> event) {
+        CustomPlayerEntity animatable = event.getAnimatable();
+        return MovementQuery.getVerticalSpeed(animatable.getEntity(), animatable.getPositionTracker());
     }
 }

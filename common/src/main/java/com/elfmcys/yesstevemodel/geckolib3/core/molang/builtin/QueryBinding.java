@@ -11,6 +11,7 @@ import com.elfmcys.yesstevemodel.geckolib3.core.molang.builtin.query.*;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.context.IContext;
 import com.elfmcys.yesstevemodel.geckolib3.util.MolangUtils;
 import com.elfmcys.yesstevemodel.geckolib3.core.EntityFrameStateTracker;
+import com.elfmcys.yesstevemodel.geckolib3.util.MovementQuery;
 import com.elfmcys.yesstevemodel.util.CameraUtil;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -66,10 +67,11 @@ public class QueryBinding extends ContextBinding {
         entityVar("distance_from_camera", ctx -> ctx.mc().gameRenderer.getMainCamera().getPosition().distanceTo(ctx.entity().position()));
         entityVar("eye_target_x_rotation", ctx -> ctx.entity().getViewXRot(ctx.animationEvent().getPartialTick()));
         entityVar("eye_target_y_rotation", ctx -> ctx.entity().getViewYRot(ctx.animationEvent().getPartialTick()));
-        entityVar("ground_speed", ctx -> getGroundSpeed(ctx.entity()));
-        entityVar("modified_distance_moved", ctx -> ctx.entity().walkDist);
+        entityVar("ground_speed", QueryBinding::getGroundSpeed);
+        entityVar("modified_distance_moved", QueryBinding::getModifiedDistanceMoved);
+        entityVar("modified_move_speed", QueryBinding::getModifiedMoveSpeed);
         entityVar("vertical_speed", QueryBinding::getVerticalSpeed);
-        entityVar("walk_distance", ctx -> ctx.entity().moveDist);
+        entityVar("walk_distance", QueryBinding::getWalkDistance);
         entityVar("has_rider", ctx -> ctx.entity().isVehicle());
         entityVar("is_first_person", ctx -> CameraUtil.getCameraType(ctx) == CameraType.FIRST_PERSON.ordinal());
         entityVar("is_in_water", ctx -> ctx.entity().isInWater());
@@ -79,6 +81,8 @@ public class QueryBinding extends ContextBinding {
         entityVar("is_riding", ctx -> ctx.entity().isPassenger());
         entityVar("is_sneaking", ctx -> ctx.entity().onGround() && ctx.entity().getPose() == Pose.CROUCHING);
         entityVar("is_spectator", ctx -> ctx.entity().isSpectator());
+        entityVar("is_standing", QueryBinding::isStanding);
+        entityVar("is_moving", ctx -> ctx.animationEvent().isMoving() || getGroundSpeed(ctx) > MovementQuery.EPSILON);
         entityVar("is_sprinting", ctx -> ctx.entity().isSprinting());
         entityVar("is_swimming", ctx -> ctx.entity().isSwimming());
 
@@ -89,6 +93,7 @@ public class QueryBinding extends ContextBinding {
         livingEntityVar("hurt_time", ctx -> ctx.entity().hurtTime);
         livingEntityVar("is_eating", ctx -> ctx.entity().getUseItem().getUseAnimation() == UseAnim.EAT);
         livingEntityVar("is_playing_dead", ctx -> ctx.entity().isDeadOrDying());
+        livingEntityVar("is_sitting", ctx -> ctx.data().isSitting);
         livingEntityVar("is_sleeping", ctx -> ctx.entity().isSleeping());
         livingEntityVar("is_using_item", ctx -> ctx.entity().isUsingItem());
         livingEntityVar("item_in_use_duration", ctx -> ctx.entity().getTicksUsingItem() / 20.0d);
@@ -180,14 +185,39 @@ public class QueryBinding extends ContextBinding {
         return 20.0f * (context.entity().getYRot() - context.entity().yRotO);
     }
 
-    private static float getGroundSpeed(Entity entity) {
-        Vec3 deltaMovement = entity.getDeltaMovement();
-        return 20.0f * Mth.sqrt((float) ((deltaMovement.x * deltaMovement.x) + (deltaMovement.z * deltaMovement.z)));
+    private static float getGroundSpeed(IContext<Entity> context) {
+        return MovementQuery.getGroundSpeed(context.entity(), context.geoInstance().getPositionTracker(), context.animationEvent());
+    }
+
+    private static float getModifiedMoveSpeed(IContext<Entity> context) {
+        return Math.abs(context.animationEvent().getLimbSwingAmount()) > MovementQuery.EPSILON
+                ? Math.abs(context.animationEvent().getLimbSwingAmount())
+                : getGroundSpeed(context);
+    }
+
+    private static float getModifiedDistanceMoved(IContext<Entity> context) {
+        float limbSwing = context.animationEvent().getLimbSwing();
+        if (Float.isFinite(limbSwing) && Math.abs(limbSwing) > MovementQuery.EPSILON) {
+            return limbSwing;
+        }
+        return context.entity().walkDist;
+    }
+
+    private static float getWalkDistance(IContext<Entity> context) {
+        float limbSwing = context.animationEvent().getLimbSwing();
+        if (Float.isFinite(limbSwing) && Math.abs(limbSwing) > MovementQuery.EPSILON) {
+            return limbSwing;
+        }
+        return context.entity().moveDist;
     }
 
     private static float getVerticalSpeed(IContext<Entity> context) {
-        EntityFrameStateTracker<?> positionTracker = context.geoInstance().getPositionTracker();
-        return (20.0f * ((float) positionTracker.getPositionDelta().y)) / positionTracker.getTimeDelta();
+        return MovementQuery.getVerticalSpeed(context.entity(), context.geoInstance().getPositionTracker());
+    }
+
+    private static boolean isStanding(IContext<Entity> context) {
+        Entity entity = context.entity();
+        return entity.onGround() && entity.getPose() == Pose.STANDING && !context.animationEvent().isMoving();
     }
 
     private static float getCapeFlapAmount(IContext<Player> context) {

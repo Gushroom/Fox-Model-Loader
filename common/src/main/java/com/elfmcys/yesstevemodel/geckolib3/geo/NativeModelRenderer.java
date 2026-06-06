@@ -15,6 +15,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import rip.ysm.api.PlatformAPI;
 import rip.ysm.compat.oculus.OculusCompat;
 import rip.ysm.compat.optifine.OptiFineDetector;
 import rip.ysm.gpu.GpuCapability;
@@ -37,8 +38,9 @@ public class NativeModelRenderer {
         OculusCompat.updatePBRState();
         RenderSystem.getProjectionMatrix().mul(RenderSystem.getModelViewMatrix(), projectionModelViewMatrix);
         boolean isPreview = ModelPreviewRenderer.isPreview() || ModelPreviewRenderer.isExtraPlayer();
+        boolean useCompatibilityRenderer = useCompatibilityRenderer();
 
-        if (textureLocation != null && NativeLibLoader.isLoaded() && !GeneralConfig.USE_COMPATIBILITY_RENDERER.get() && GeneralConfig.USE_GPU_RENDERER.get()) {
+        if (textureLocation != null && NativeLibLoader.isLoaded() && !useCompatibilityRenderer && GeneralConfig.USE_GPU_RENDERER.get()) {
 
             if(!GpuCapability.isAvailable())
             {
@@ -58,7 +60,7 @@ public class NativeModelRenderer {
             }
         }
 
-        if (NativeLibLoader.isLoaded() && !GeneralConfig.USE_COMPATIBILITY_RENDERER.get()) { // WIP: SIMD MODEL RENDER
+        if (NativeLibLoader.isLoaded() && !useCompatibilityRenderer) { // WIP: SIMD MODEL RENDER
             nativeRenderModel(
                     buffer,
                     pose,
@@ -91,6 +93,10 @@ public class NativeModelRenderer {
                     isPreview
             );
         }
+    }
+
+    private static boolean useCompatibilityRenderer() {
+        return GeneralConfig.USE_COMPATIBILITY_RENDERER.get() || "neoforge".equalsIgnoreCase(PlatformAPI.getPlatformName());
     }
 
     public static void renderModel(
