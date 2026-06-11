@@ -70,20 +70,6 @@ public final class PlayerCapability extends CustomPlayerEntity {
 
     private float renderStateHeadPitch;
 
-    private int lastRenderStateDebugTick = -1000;
-
-    private int lastAnimationSampleDebugTick = -1000;
-
-    private int lastAnimationStateDebugTick = -1000;
-
-    private int lastControllerDebugTick = -1000;
-
-    private int lastAnimationQueueDebugTick = -1000;
-
-    private int lastControllerPathDebugTick = -1000;
-
-    private int lastTransformDebugTick = -1000;
-
     public PlayerCapability(Player player) {
         super(player, player instanceof LocalPlayer, true);
         this.molangVarsMap = new Int2ReferenceOpenHashMap<>(8);
@@ -104,6 +90,10 @@ public final class PlayerCapability extends CustomPlayerEntity {
         return this.serverVarContainer;
     }
 
+    public int getCurrentModelHashId() {
+        return this.currentModelHashId;
+    }
+
     public void beginRenderState(float partialTick) {
         float sanitizedPartialTick = Float.isFinite(partialTick) ? Mth.clamp(partialTick, 0.0f, 1.0f) : 0.0f;
         float bodyRot = Mth.rotLerp(sanitizedPartialTick, this.entity.yBodyRotO, this.entity.yBodyRot);
@@ -114,22 +104,6 @@ public final class PlayerCapability extends CustomPlayerEntity {
         this.renderStateBodyRot = bodyRot;
         this.renderStateNetHeadYaw = headRot - bodyRot;
         this.renderStateHeadPitch = Mth.lerp(sanitizedPartialTick, this.entity.xRotO, this.entity.getXRot());
-        if (shouldLogRenderStateDebug()) {
-            YesSteveModel.LOGGER.info(
-                    "[YSM-MOVE] render-state player={} tick={} partial={} walkSpeed={} walkPos={} bodyRot={} netHeadYaw={} headPitch={} pose={} onGround={} sprinting={} delta={}",
-                    this.entity.getGameProfile().getName(),
-                    this.entity.tickCount,
-                    sanitizedPartialTick,
-                    this.renderStateWalkAnimationSpeed,
-                    this.renderStateWalkAnimationPos,
-                    this.renderStateBodyRot,
-                    this.renderStateNetHeadYaw,
-                    this.renderStateHeadPitch,
-                    this.entity.getPose(),
-                    this.entity.onGround(),
-                    this.entity.isSprinting(),
-                    this.entity.getDeltaMovement());
-        }
     }
 
     public void endRenderState() {
@@ -158,84 +132,6 @@ public final class PlayerCapability extends CustomPlayerEntity {
 
     public float getRenderStateHeadPitch() {
         return this.renderStateHeadPitch;
-    }
-
-    public boolean shouldLogRenderStateDebug() {
-        return shouldLogMovementDebug(0);
-    }
-
-    public boolean shouldLogAnimationSampleDebug() {
-        return shouldLogMovementDebug(1);
-    }
-
-    public boolean shouldLogAnimationStateDebug() {
-        return shouldLogMovementDebug(2);
-    }
-
-    public boolean shouldLogControllerDebug() {
-        return shouldLogMovementDebug(3);
-    }
-
-    public boolean shouldLogAnimationQueueDebug() {
-        return shouldLogMovementDebug(4);
-    }
-
-    public boolean shouldLogControllerPathDebug() {
-        return shouldLogMovementDebug(5);
-    }
-
-    public boolean shouldLogTransformDebug() {
-        return shouldLogMovementDebug(6);
-    }
-
-    private boolean shouldLogMovementDebug(int slot) {
-        int tick = this.entity.tickCount;
-        switch (slot) {
-            case 0:
-                if (tick - this.lastRenderStateDebugTick >= 20) {
-                    this.lastRenderStateDebugTick = tick;
-                    return true;
-                }
-                return false;
-            case 1:
-                if (tick - this.lastAnimationSampleDebugTick >= 20) {
-                    this.lastAnimationSampleDebugTick = tick;
-                    return true;
-                }
-                return false;
-            case 2:
-                if (tick - this.lastAnimationStateDebugTick >= 20) {
-                    this.lastAnimationStateDebugTick = tick;
-                    return true;
-                }
-                return false;
-            case 3:
-                if (tick - this.lastControllerDebugTick >= 20) {
-                    this.lastControllerDebugTick = tick;
-                    return true;
-                }
-                return false;
-            case 4:
-                if (tick - this.lastAnimationQueueDebugTick >= 20) {
-                    this.lastAnimationQueueDebugTick = tick;
-                    return true;
-                }
-                return false;
-            case 5:
-                if (tick - this.lastControllerPathDebugTick >= 20) {
-                    this.lastControllerPathDebugTick = tick;
-                    return true;
-                }
-                return false;
-            case 6:
-                if (tick - this.lastTransformDebugTick >= 20) {
-                    this.lastTransformDebugTick = tick;
-                    return true;
-                }
-                return false;
-            default:
-                return false;
-        }
     }
 
     @Override
@@ -304,23 +200,64 @@ public final class PlayerCapability extends CustomPlayerEntity {
         MolangVarHolder varHolder = this.molangVarsMap.computeIfAbsent(i, i2 -> {
             return new MolangVarHolder();
         });
+        YesSteveModel.LOGGER.info(
+                "[YSM-FP-ARM] molang-full-sync player={} local={} syncHash={} currentHash={} vars={} cap={} oldRoaming={} data={}",
+                this.entity.getGameProfile().getName(),
+                isLocalPlayerModel(),
+                i,
+                this.currentModelHashId,
+                int2FloatOpenHashMap.size(),
+                id(this),
+                id(this.serverVarContainer),
+                describeVars(int2FloatOpenHashMap));
         if (isLocalPlayerModel()) {
             if (varHolder.currentVars == null) {
                 varHolder.currentVars = int2FloatOpenHashMap;
                 varHolder.applyPendingDeltas();
                 if (i == this.currentModelHashId) {
                     this.serverVarContainer = new RoamingStruct(i, int2FloatOpenHashMap);
+                    YesSteveModel.LOGGER.info(
+                            "[YSM-FP-ARM] molang-full-sync-applied player={} local=true syncHash={} cap={} newRoaming={} controllersReset=true",
+                            this.entity.getGameProfile().getName(),
+                            i,
+                            id(this),
+                            id(this.serverVarContainer));
                     clearAnimationControllers();
                     return;
                 }
+                YesSteveModel.LOGGER.info(
+                        "[YSM-FP-ARM] molang-full-sync-stored player={} local=true syncHash={} currentHash={} cap={} reason=hash-mismatch",
+                        this.entity.getGameProfile().getName(),
+                        i,
+                        this.currentModelHashId,
+                        id(this));
                 return;
             }
+            YesSteveModel.LOGGER.info(
+                    "[YSM-FP-ARM] molang-full-sync-ignored player={} local=true syncHash={} currentHash={} cap={} reason=already-initialized",
+                    this.entity.getGameProfile().getName(),
+                    i,
+                    this.currentModelHashId,
+                    id(this));
             return;
         }
         varHolder.currentVars = int2FloatOpenHashMap;
         varHolder.applyPendingDeltas();
         if (i == this.currentModelHashId) {
             this.serverVarContainer = new Int2FloatOpenHashMapStruct(int2FloatOpenHashMap);
+            YesSteveModel.LOGGER.info(
+                    "[YSM-FP-ARM] molang-full-sync-applied player={} local=false syncHash={} cap={} newRoaming={}",
+                    this.entity.getGameProfile().getName(),
+                    i,
+                    id(this),
+                    id(this.serverVarContainer));
+        } else {
+            YesSteveModel.LOGGER.info(
+                    "[YSM-FP-ARM] molang-full-sync-stored player={} local=false syncHash={} currentHash={} cap={} reason=hash-mismatch",
+                    this.entity.getGameProfile().getName(),
+                    i,
+                    this.currentModelHashId,
+                    id(this));
         }
     }
 
@@ -346,6 +283,15 @@ public final class PlayerCapability extends CustomPlayerEntity {
             } else {
                 varHolder.pendingDeltas.enqueue(int2FloatMap);
             }
+            YesSteveModel.LOGGER.info(
+                    "[YSM-FP-ARM] molang-delta-received player={} syncHash={} currentHash={} vars={} cap={} roaming={} data={}",
+                    this.entity.getGameProfile().getName(),
+                    i,
+                    this.currentModelHashId,
+                    int2FloatMap.size(),
+                    id(this),
+                    id(this.serverVarContainer),
+                    describeVars(int2FloatMap));
             applyMolangDelta(i, int2FloatMap);
         }
     }
@@ -357,6 +303,14 @@ public final class PlayerCapability extends CustomPlayerEntity {
                 if (roamingStruct.hasPendingChanges()) {
                     RoamingSyncBatch syncBatch = roamingStruct.consumePendingBoneData();
                     applyMolangDelta(syncBatch.modelHashId(), syncBatch.changedVariables());
+                    YesSteveModel.LOGGER.info(
+                            "[YSM-FP-ARM] molang-delta-send player={} syncHash={} vars={} cap={} roaming={} data={}",
+                            this.entity.getGameProfile().getName(),
+                            syncBatch.modelHashId(),
+                            syncBatch.changedVariables().size(),
+                            id(this),
+                            id(this.serverVarContainer),
+                            describeVars(syncBatch.changedVariables()));
                     String[] strArr = new String[syncBatch.changedVariables().size()];
                     float[] fArr = new float[syncBatch.changedVariables().size()];
                     int i = 0;
@@ -412,5 +366,36 @@ public final class PlayerCapability extends CustomPlayerEntity {
                 this.currentVars.putAll(this.pendingDeltas.dequeue());
             }
         }
+    }
+
+    private static String id(Object object) {
+        if (object == null) {
+            return "null";
+        }
+        return object.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(object));
+    }
+
+    private static String describeVars(Int2FloatMap vars) {
+        if (vars == null || vars.isEmpty()) {
+            return "{}";
+        }
+        StringBuilder builder = new StringBuilder("{");
+        int count = 0;
+        ObjectIterator<Int2FloatMap.Entry> iterator = Int2FloatMaps.fastIterable(vars).iterator();
+        while (iterator.hasNext()) {
+            Int2FloatMap.Entry entry = iterator.next();
+            if (count > 0) {
+                builder.append(", ");
+            }
+            if (count >= 12) {
+                builder.append("... +").append(vars.size() - count).append(" more");
+                break;
+            }
+            String name = StringPool.getString(entry.getIntKey());
+            builder.append(name == null ? entry.getIntKey() : name).append('=').append(entry.getFloatValue());
+            count++;
+        }
+        builder.append('}');
+        return builder.toString();
     }
 }

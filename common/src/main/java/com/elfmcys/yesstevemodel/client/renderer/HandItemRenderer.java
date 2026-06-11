@@ -1,5 +1,6 @@
 package com.elfmcys.yesstevemodel.client.renderer;
 
+import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.client.entity.PlayerGeoEntity;
 import com.elfmcys.yesstevemodel.client.model.ModelAssembly;
@@ -21,7 +22,20 @@ public class HandItemRenderer {
 
     public void renderHandItem(LocalPlayer localPlayer, ModelAssembly modelAssembly, PlayerCapability capability, HumanoidArm arm, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, float partialTick) {
         AnimatedGeoModel model;
-        if (this.geoModel == null || this.geoModel.getEntity() != localPlayer) {
+        boolean missingModel = this.geoModel == null;
+        boolean playerChanged = !missingModel && this.geoModel.getEntity() != localPlayer;
+        boolean capabilityChanged = !missingModel && this.geoModel.getPlayerCapability() != capability;
+        if (missingModel || playerChanged || capabilityChanged) {
+            YesSteveModel.LOGGER.info(
+                    "[YSM-FP-ARM] hand-cache-refresh player={} reason={} modelId={} modelHash={} oldCap={} newCap={} newRoaming={} capAssembly={}",
+                    localPlayer.getGameProfile().getName(),
+                    missingModel ? "missing" : playerChanged ? "player-changed" : "capability-changed",
+                    capability.getModelId(),
+                    capability.getCurrentModelHashId(),
+                    missingModel ? "null" : id(this.geoModel.getPlayerCapability()),
+                    id(capability),
+                    id(capability.getServerVarContainer()),
+                    id(capability.getModelAssembly()));
             this.geoModel = new PlayerGeoEntity(localPlayer, capability);
         }
         this.geoModel.tickModel();
@@ -34,6 +48,7 @@ public class HandItemRenderer {
         }
         ResourceLocation resourceLocation = event.getTextureLocation() == null ? capability.getTextureLocation() : event.getTextureLocation();
         int textureIndex = event.getTextureLocation() == null ? capability.getTextureIndex() : 0;
+        this.geoModel.logRenderState(arm, textureIndex, resourceLocation);
         VertexConsumer buffer = bufferSource.getBuffer(CustomEntityTranslucentRenderType.get(resourceLocation));
         int renderPartMask = arm == HumanoidArm.LEFT ? LayerTypeConstants.TYPE_LEFT : LayerTypeConstants.TYPE_RIGHT;
         poseStack.pushPose();
@@ -45,5 +60,12 @@ public class HandItemRenderer {
         poseStack.scale(-1.0f, -1.0f, 1.0f);
         NativeModelRenderer.renderMesh(buffer, poseStack.last(), model.getGeoModel(), model.getMatrixData(), model.getAbsPivotData(), textureIndex, renderPartMask, packedLight, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f, resourceLocation);
         poseStack.popPose();
+    }
+
+    private static String id(Object object) {
+        if (object == null) {
+            return "null";
+        }
+        return object.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(object));
     }
 }

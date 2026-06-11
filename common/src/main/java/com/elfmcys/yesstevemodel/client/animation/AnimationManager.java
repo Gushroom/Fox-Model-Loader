@@ -1,7 +1,5 @@
 package com.elfmcys.yesstevemodel.client.animation;
 
-import com.elfmcys.yesstevemodel.YesSteveModel;
-import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
 import rip.ysm.compat.parcool.ParcoolCompat;
 import rip.ysm.compat.slashblade.SlashBladeCompat;
@@ -57,21 +55,6 @@ public class AnimationManager implements IAnimationPredicate<CustomPlayerEntity>
                     if (animationState.getPredicate().test(player, event)) {
                         String name = animationState.getAnimationName();
                         ILoopType loopType = animationState.getLoopType();
-                        if (event.getAnimatable() instanceof PlayerCapability cap && cap.shouldLogAnimationStateDebug()) {
-                            YesSteveModel.LOGGER.info(
-                                    "[YSM-MOVE] state-select player={} tick={} state={} priority={} loop={} hasAnimation={} limbAmount={} moving={} pose={} onGround={} sprinting={}",
-                                    player.getGameProfile().getName(),
-                                    player.tickCount,
-                                    name,
-                                    animationState.getPriority(),
-                                    loopType,
-                                    event.getAnimatable().getAnimation(name) != null,
-                                    event.getLimbSwingAmount(),
-                                    event.isMoving(),
-                                    player.getPose(),
-                                    player.onGround(),
-                                    player.isSprinting());
-                        }
                         PlayState slashBladePlayState = SlashBladeCompat.handleSlashBladeAnim(player, event, name, loopType);
                         if (slashBladePlayState != null) {
                             return slashBladePlayState;

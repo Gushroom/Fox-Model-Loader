@@ -1,8 +1,6 @@
 package com.elfmcys.yesstevemodel.geckolib3.core.processor;
 
-import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.audio.AudioPlayerManager;
-import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.geckolib3.core.manager.AnimationData;
 import com.elfmcys.yesstevemodel.geckolib3.core.controller.IAnimationController;
 import com.elfmcys.yesstevemodel.geckolib3.geo.animated.AnimatedGeoModel;
@@ -215,32 +213,6 @@ public class AnimationProcessor<TEntity extends Entity> {
             scale.applyLinearBlendTo(snapshot.scale);
         }
 
-        if ("player.main".equals(this.currentControllerName) && this.animatable instanceof PlayerCapability cap && cap.shouldLogTransformDebug()) {
-            YesSteveModel.LOGGER.info(
-                    "[YSM-MOVE] transform-apply player={} tick={} seekTime={} controller={} bone={} rot={} rotOut=({}, {}, {}) pos={} posOut=({}, {}, {}) scale={} scaleOut=({}, {}, {}) deprecated={}",
-                    cap.getEntity().getGameProfile().getName(),
-                    cap.getEntity().tickCount,
-                    seekTime,
-                    this.currentControllerName,
-                    snapshot.bone.getName(),
-                    rot != null ? vectorToString(rot) : "null",
-                    snapshot.rotation.x,
-                    snapshot.rotation.y,
-                    snapshot.rotation.z,
-                    pos != null ? vectorToString(pos) : "null",
-                    snapshot.position.x,
-                    snapshot.position.y,
-                    snapshot.position.z,
-                    scale != null ? vectorToString(scale) : "null",
-                    snapshot.scale.x,
-                    snapshot.scale.y,
-                    snapshot.scale.z,
-                    this.currentDeprecatedMode);
-        }
-    }
-
-    private static String vectorToString(Vector3f vector) {
-        return "(" + vector.x + ", " + vector.y + ", " + vector.z + ")";
     }
 
     @Nullable

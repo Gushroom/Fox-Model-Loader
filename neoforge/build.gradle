@@ -11,6 +11,17 @@ loom {
     mixin {
         useLegacyMixinAp = false
     }
+    runs {
+        configureEach {
+            property 'yes_steve_model.debug.disable_lan_auth', 'true'
+        }
+
+        client2 {
+            client()
+            runDir 'run/client_b'
+            programArgs '--username', 'tartaric_acid'
+        }
+    }
 }
 
 configurations {

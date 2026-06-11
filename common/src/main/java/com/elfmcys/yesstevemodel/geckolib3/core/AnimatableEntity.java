@@ -1,6 +1,5 @@
 package com.elfmcys.yesstevemodel.geckolib3.core;
 
-import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.audio.IAudioStreamFactory;
 import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.client.event.ClientTickEvent;
@@ -232,24 +231,19 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
         boolean shouldSit = entity.isPassenger() && entity.getVehicle() != null && EntityDataBridge.shouldRiderSit(entity.getVehicle());
         float limbSwingAmount = 0.0f;
         float limbSwing = 0.0f;
-        float movementFallbackSpeed = 0.0f;
-        String movementSource = "none";
         if (!shouldSit && entity.isAlive() && livingEntity != null) {
             if (playerCapability != null && playerCapability.hasRenderState()) {
                 limbSwingAmount = playerCapability.getRenderStateWalkAnimationSpeed();
                 limbSwing = playerCapability.getRenderStateWalkAnimationPos();
-                movementSource = "render_state";
             } else {
                 limbSwingAmount = livingEntity.walkAnimation.speed(partialTick);
                 limbSwing = livingEntity.walkAnimation.position(partialTick);
-                movementSource = "walk_animation";
             }
             if (Math.abs(limbSwingAmount) <= MovementQuery.EPSILON) {
-                movementFallbackSpeed = Mth.clamp(MovementQuery.getGroundSpeed(entity, this.positionTracker, null), 0.0f, 1.0f);
+                float movementFallbackSpeed = Mth.clamp(MovementQuery.getGroundSpeed(entity, this.positionTracker, null), 0.0f, 1.0f);
                 if (movementFallbackSpeed > MovementQuery.EPSILON) {
                     limbSwingAmount = movementFallbackSpeed;
                     limbSwing = this.seekTime * 0.6662f;
-                    movementSource = "fallback";
                 }
             }
             if (livingEntity.isBaby()) {
@@ -295,23 +289,6 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
         modelData.lerpBodyRot = lerpBodyRot;
         modelData.lerpedAge = tickCount + partialTick;
         AnimationEvent<AnimatableEntity<TEntity>> event = new AnimationEvent<>(this, limbSwing, limbSwingAmount, tickCount, partialTick, frameTime, Math.abs(limbSwingAmount) > MovementQuery.EPSILON, z, modelData);
-        if (playerCapability != null && playerCapability.shouldLogAnimationSampleDebug()) {
-            YesSteveModel.LOGGER.info(
-                    "[YSM-MOVE] anim-sample player={} tick={} source={} limbSwing={} limbAmount={} fallback={} isMoving={} pose={} onGround={} xxa={} yya={} zza={} renderState={}",
-                    playerCapability.getEntity().getGameProfile().getName(),
-                    tickCount,
-                    movementSource,
-                    limbSwing,
-                    limbSwingAmount,
-                    movementFallbackSpeed,
-                    event.isMoving(),
-                    entity.getPose(),
-                    entity.onGround(),
-                    livingEntity != null ? livingEntity.xxa : 0.0f,
-                    livingEntity != null ? livingEntity.yya : 0.0f,
-                    livingEntity != null ? livingEntity.zza : 0.0f,
-                    playerCapability.hasRenderState());
-        }
         AnimationContext<?> context = new AnimationContext<>(entity, this, event, modelData);
         context.setLogger(getLogger());
         setCustomAnimations(context, event);
@@ -348,21 +325,6 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
             boolean z2 = (this.isTickTriggered && !this.hasUpdatedThisTick) || this.wasAnimationActiveLastTick || z;
             boolean z3 = (!z || (this.seekTime == 0.0f && !this.hasUpdatedThisTick)) && this.isTickTriggered && !this.hasUpdatedThisTick;
             resetHeadTracking(this.wasEvaluatedLastFrame);
-            if (this instanceof PlayerCapability playerCapability && playerCapability.shouldLogControllerDebug()) {
-                YesSteveModel.LOGGER.info(
-                        "[YSM-MOVE] anim-gate player={} tick={} seekTime={} active={} evaluate={} fresh={} tickTriggered={} updatedThisTick={} wasActive={} controllerCount={} boneDisabled={}",
-                        playerCapability.getEntity().getGameProfile().getName(),
-                        event.getTickCount(),
-                        this.seekTime,
-                        z,
-                        z2,
-                        z3,
-                        this.isTickTriggered,
-                        this.hasUpdatedThisTick,
-                        this.wasAnimationActiveLastTick,
-                        this.manager.getAnimationControllers().size(),
-                        this.animationProcessor.isDisabled());
-            }
             if (z2) {
                 if (z3) {
                     this.hasUpdatedThisTick = true;

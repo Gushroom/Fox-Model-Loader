@@ -1,8 +1,5 @@
 package com.elfmcys.yesstevemodel.geckolib3.core.controller;
 
-import com.elfmcys.yesstevemodel.YesSteveModel;
-import com.elfmcys.yesstevemodel.capability.PlayerCapability;
-import com.elfmcys.yesstevemodel.client.entity.PlayerGeoEntity;
 import com.elfmcys.yesstevemodel.geckolib3.core.keyframe.*;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.SoundKeyFrameExecutor;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.InstructionKeyFrameExecutor;
@@ -332,53 +329,16 @@ public class  AnimationControllerInstance {
         this.currentAnimation = pair.getSecond();
         this.currentAnimationLoop = pair.getFirst();
         this.isAnimationFinished = false;
-        int matchedBones = 0;
-        int missingBones = 0;
-        String firstMatchedBone = "";
-        String firstMissingBone = "";
         for (BoneAnimation animation : this.currentAnimation.boneAnimations) {
             BoneAnimationQueue queue = this.boneAnimationQueues.get(animation.boneId);
             if (queue != null) {
                 queue.applyAnimation(animation, !animation.scaleKeyFrames.isEmpty());
                 this.activeBoneAnimationQueues.add(queue);
-                matchedBones++;
-                if (firstMatchedBone.isEmpty()) {
-                    firstMatchedBone = animation.boneName;
-                }
-            } else {
-                missingBones++;
-                if (firstMissingBone.isEmpty()) {
-                    firstMissingBone = animation.boneName;
-                }
             }
         }
         this.instructionExecutor = new InstructionKeyFrameExecutor(this.currentAnimation.customInstructionKeyframes);
         this.soundExecutor = new SoundKeyFrameExecutor(this.currentAnimation.soundKeyFrames, this.context.getAudioPlayerManager());
-        if (this.animatable instanceof PlayerCapability cap && isMovementDebugAnimation(this.currentAnimation.animationName)) {
-            YesSteveModel.LOGGER.info(
-                    "[YSM-MOVE] queue-apply player={} tick={} animation={} loop={} length={} bones={} matched={} missing={} firstMatched={} firstMissing={} activeQueues={}",
-                    cap.getEntity().getGameProfile().getName(),
-                    cap.getEntity().tickCount,
-                    this.currentAnimation.animationName,
-                    this.currentAnimationLoop,
-                    this.currentAnimation.animationLength,
-                    this.currentAnimation.boneAnimations.size(),
-                    matchedBones,
-                    missingBones,
-                    firstMatchedBone,
-                    firstMissingBone,
-                    this.activeBoneAnimationQueues.size());
-        }
         return true;
-    }
-
-    private static boolean isMovementDebugAnimation(String animationName) {
-        return "idle".equals(animationName)
-                || "walk".equals(animationName)
-                || "run".equals(animationName)
-                || "jump".equals(animationName)
-                || "sneak".equals(animationName)
-                || "sneaking".equals(animationName);
     }
 
     private void clearAnimation() {
