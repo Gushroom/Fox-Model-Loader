@@ -145,8 +145,7 @@ public class CtrlBinding extends ContextBinding {
     }
 
     private static boolean isWalking(IContext<LivingEntity> context) {
-        return Math.abs(context.animationEvent().getLimbSwingAmount()) > 0.05f
-                || MovementQuery.getGroundSpeed(context.entity(), context.geoInstance().getPositionTracker(), context.animationEvent()) > 0.05f;
+        return Math.abs(context.animationEvent().getLimbSwingAmount()) > 0.05f;
     }
 
     private static float getVerticalVelocity(IContext<LivingEntity> context) {

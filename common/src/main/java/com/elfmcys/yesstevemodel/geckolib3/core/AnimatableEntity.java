@@ -18,7 +18,6 @@ import com.elfmcys.yesstevemodel.geckolib3.core.molang.storage.IForeignVariableS
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.value.IValue;
 import com.elfmcys.yesstevemodel.geckolib3.core.processor.AnimationProcessor;
 import com.elfmcys.yesstevemodel.geckolib3.core.processor.IBone;
-import com.elfmcys.yesstevemodel.geckolib3.util.MovementQuery;
 import com.elfmcys.yesstevemodel.geckolib3.model.provider.data.EntityModelData;
 import com.elfmcys.yesstevemodel.client.entity.IPreviewAnimatable;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.context.AnimationContext;
@@ -239,13 +238,6 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
                 limbSwingAmount = livingEntity.walkAnimation.speed(partialTick);
                 limbSwing = livingEntity.walkAnimation.position(partialTick);
             }
-            if (Math.abs(limbSwingAmount) <= MovementQuery.EPSILON) {
-                float movementFallbackSpeed = Mth.clamp(MovementQuery.getGroundSpeed(entity, this.positionTracker, null), 0.0f, 1.0f);
-                if (movementFallbackSpeed > MovementQuery.EPSILON) {
-                    limbSwingAmount = movementFallbackSpeed;
-                    limbSwing = this.seekTime * 0.6662f;
-                }
-            }
             if (livingEntity.isBaby()) {
                 limbSwing *= 3.0f;
             }
@@ -288,7 +280,7 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
         modelData.netHeadYaw = -Mth.clamp(Mth.wrapDegrees(netHeadYaw), -85.0f, 85.0f);
         modelData.lerpBodyRot = lerpBodyRot;
         modelData.lerpedAge = tickCount + partialTick;
-        AnimationEvent<AnimatableEntity<TEntity>> event = new AnimationEvent<>(this, limbSwing, limbSwingAmount, tickCount, partialTick, frameTime, Math.abs(limbSwingAmount) > MovementQuery.EPSILON, z, modelData);
+        AnimationEvent<AnimatableEntity<TEntity>> event = new AnimationEvent<>(this, limbSwing, limbSwingAmount, tickCount, partialTick, frameTime, limbSwingAmount <= -getScale() || limbSwingAmount >= getScale(), z, modelData);
         AnimationContext<?> context = new AnimationContext<>(entity, this, event, modelData);
         context.setLogger(getLogger());
         setCustomAnimations(context, event);

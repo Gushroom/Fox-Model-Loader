@@ -42,7 +42,10 @@ public final class CapabilityEvent {
         TickEvent.SERVER_POST.register(CapabilityEvent::onServerTick);
     }
 
-    private static void onPlayerCloned(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean wasDeath) {
+    private static void onPlayerCloned(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean keepEverything) {
+        // NOTE: Architectury's third parameter is "keep everything" (NeoForge passes !wasDeath,
+        // Fabric passes restoreFrom's "alive" flag) — it is NOT wasDeath. Capabilities are copied
+        // unconditionally either way, matching the original Forge PlayerEvent.Clone handler.
         if (!YesSteveModel.isAvailable()) {
             return;
         }
@@ -66,6 +69,45 @@ public final class CapabilityEvent {
             Objects.requireNonNull(newStarModels);
             oldStarModelsCap.ifPresent(newStarModels::copyFrom);
         });
+    }
+
+    /**
+     * Faithful port of the original Forge {@code PlayerEvent.StartTracking} handler. Without it,
+     * a client that begins tracking an entity (player respawned, changed dimension, or re-entered
+     * render distance) never receives that entity's model and falls back to the vanilla skin.
+     * Called from the NeoForge {@code PlayerEvent.StartTracking} and Fabric
+     * {@code EntityTrackingEvents.START_TRACKING} hooks; the client defers application through
+     * {@code EntityJoinCallbackEvent}, so packet-before-spawn ordering on Fabric is safe.
+     */
+    public static void onStartTracking(Entity target, ServerPlayer observer) {
+        if (!YesSteveModel.isAvailable() || target == null) {
+            return;
+        }
+        if (target instanceof ServerPlayer trackedPlayer) {
+            getModelInfoCap(trackedPlayer).ifPresent(cap -> {
+                if (!NetworkHandler.isPlayerConnected(trackedPlayer) && !cap.isMandatory()) {
+                    return;
+                }
+                Optional<S2CSetModelAndTexturePacket> optional = cap.createSyncMessage(trackedPlayer, false);
+                Consumer<? super S2CSetModelAndTexturePacket> consumer = message -> NetworkHandler.sendToClientPlayer(message, observer);
+                Objects.requireNonNull(cap);
+                optional.ifPresentOrElse(consumer, cap::markDirty);
+            });
+            return;
+        }
+        if (target instanceof Projectile projectile) {
+            ProjectileModelCapability.get(projectile).ifPresent(cap -> {
+                if (cap.isInitialized()) {
+                    NetworkHandler.sendToClientPlayer(new S2CSyncProjectileModelPacket(projectile.getId(), cap), observer);
+                }
+            });
+        } else {
+            VehicleModelCapability.get(target).ifPresent(cap -> {
+                if (cap.isInitialized()) {
+                    NetworkHandler.sendToClientPlayer(new S2CSyncVehicleModelPacket(target.getId(), cap), observer);
+                }
+            });
+        }
     }
 
     private static EventResult onEntityAdd(Entity entity, Level level) {

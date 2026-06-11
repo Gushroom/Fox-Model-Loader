@@ -82,7 +82,7 @@ public class QueryBinding extends ContextBinding {
         entityVar("is_sneaking", ctx -> ctx.entity().onGround() && ctx.entity().getPose() == Pose.CROUCHING);
         entityVar("is_spectator", ctx -> ctx.entity().isSpectator());
         entityVar("is_standing", QueryBinding::isStanding);
-        entityVar("is_moving", ctx -> ctx.animationEvent().isMoving() || getGroundSpeed(ctx) > MovementQuery.EPSILON);
+        entityVar("is_moving", ctx -> ctx.animationEvent().isMoving());
         entityVar("is_sprinting", ctx -> ctx.entity().isSprinting());
         entityVar("is_swimming", ctx -> ctx.entity().isSwimming());
 
@@ -186,7 +186,7 @@ public class QueryBinding extends ContextBinding {
     }
 
     private static float getGroundSpeed(IContext<Entity> context) {
-        return MovementQuery.getGroundSpeed(context.entity(), context.geoInstance().getPositionTracker(), context.animationEvent());
+        return MovementQuery.getGroundSpeed(context.entity());
     }
 
     private static float getModifiedMoveSpeed(IContext<Entity> context) {
@@ -196,18 +196,10 @@ public class QueryBinding extends ContextBinding {
     }
 
     private static float getModifiedDistanceMoved(IContext<Entity> context) {
-        float limbSwing = context.animationEvent().getLimbSwing();
-        if (Float.isFinite(limbSwing) && Math.abs(limbSwing) > MovementQuery.EPSILON) {
-            return limbSwing;
-        }
         return context.entity().walkDist;
     }
 
     private static float getWalkDistance(IContext<Entity> context) {
-        float limbSwing = context.animationEvent().getLimbSwing();
-        if (Float.isFinite(limbSwing) && Math.abs(limbSwing) > MovementQuery.EPSILON) {
-            return limbSwing;
-        }
         return context.entity().moveDist;
     }
 

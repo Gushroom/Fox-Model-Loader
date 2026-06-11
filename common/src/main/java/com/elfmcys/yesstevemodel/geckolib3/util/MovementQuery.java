@@ -1,12 +1,9 @@
 package com.elfmcys.yesstevemodel.geckolib3.util;
 
 import com.elfmcys.yesstevemodel.geckolib3.core.EntityFrameStateTracker;
-import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 
 public final class MovementQuery {
     public static final float EPSILON = 1.0E-4f;
@@ -14,111 +11,29 @@ public final class MovementQuery {
     private MovementQuery() {
     }
 
-    public static Vec3 getPositionDelta(Entity entity, EntityFrameStateTracker<?> tracker) {
-        Vec3 trackerDelta = sanitize(tracker.getPositionDelta());
-        if (hasMovement(trackerDelta)) {
-            return trackerDelta;
-        }
-
-        Vec3 tickDelta = sanitize(new Vec3(entity.getX() - entity.xo, entity.getY() - entity.yo, entity.getZ() - entity.zo));
-        if (hasMovement(tickDelta)) {
-            return tickDelta;
-        }
-
-        Vec3 deltaMovement = sanitize(entity.getDeltaMovement());
-        if (hasMovement(deltaMovement)) {
-            float timeDelta = getTimeDelta(tracker);
-            return deltaMovement.scale(timeDelta > EPSILON ? timeDelta : 1.0f);
-        }
-
-        return Vec3.ZERO;
+    /**
+     * Faithful to OpenYSM 1.20.1 {@code query.ground_speed}: derived purely from the entity's
+     * own delta movement. Never synthesize speed from render-frame position deltas — network
+     * interpolation jitter of remote players on dedicated servers makes that read as movement
+     * while standing still.
+     */
+    public static float getGroundSpeed(Entity entity) {
+        Vec3 deltaMovement = entity.getDeltaMovement();
+        float speed = 20.0f * Mth.sqrt((float) ((deltaMovement.x * deltaMovement.x) + (deltaMovement.z * deltaMovement.z)));
+        return Float.isFinite(speed) ? speed : 0.0f;
     }
 
-    public static float getGroundSpeed(Entity entity, EntityFrameStateTracker<?> tracker, @Nullable AnimationEvent<?> event) {
-        float trackerSpeed = getHorizontalSpeedFromDelta(sanitize(tracker.getPositionDelta()), tracker);
-        if (isUsable(trackerSpeed)) {
-            return trackerSpeed;
-        }
-
-        if (event != null && isUsable(Math.abs(event.getLimbSwingAmount()))) {
-            return Math.abs(event.getLimbSwingAmount());
-        }
-
-        if (entity instanceof LivingEntity livingEntity) {
-            float partialTick = event != null ? event.getPartialTick() : 1.0f;
-            float walkSpeed = Math.abs(livingEntity.walkAnimation.speed(partialTick));
-            if (isUsable(walkSpeed)) {
-                return walkSpeed;
-            }
-        }
-
-        Vec3 deltaMovement = sanitize(entity.getDeltaMovement());
-        float velocitySpeed = 20.0f * horizontalLength(deltaMovement);
-        if (isUsable(velocitySpeed)) {
-            return velocitySpeed;
-        }
-
-        Vec3 tickDelta = sanitize(new Vec3(entity.getX() - entity.xo, entity.getY() - entity.yo, entity.getZ() - entity.zo));
-        float tickSpeed = 20.0f * horizontalLength(tickDelta);
-        return Float.isFinite(tickSpeed) && tickSpeed > 0.0f ? tickSpeed : 0.0f;
-    }
-
+    /**
+     * Faithful to OpenYSM 1.20.1 {@code query.vertical_speed}: frame-tracker position delta over
+     * frame time delta. No delta-movement fallback — grounded entities permanently carry a small
+     * downward delta movement from gravity, which would report idle entities as descending.
+     */
     public static float getVerticalSpeed(Entity entity, EntityFrameStateTracker<?> tracker) {
-        Vec3 trackerDelta = sanitize(tracker.getPositionDelta());
-        float timeDelta = getTimeDelta(tracker);
-        if (timeDelta > EPSILON && Math.abs(trackerDelta.y) > EPSILON) {
-            float trackerSpeed = (20.0f * (float) trackerDelta.y) / timeDelta;
-            if (Float.isFinite(trackerSpeed)) {
-                return trackerSpeed;
-            }
-        }
-
-        Vec3 deltaMovement = sanitize(entity.getDeltaMovement());
-        if (Math.abs(deltaMovement.y) > EPSILON) {
-            float velocitySpeed = 20.0f * (float) deltaMovement.y;
-            if (Float.isFinite(velocitySpeed)) {
-                return velocitySpeed;
-            }
-        }
-
-        float tickSpeed = 20.0f * (float) (entity.getY() - entity.yo);
-        return Float.isFinite(tickSpeed) ? tickSpeed : 0.0f;
-    }
-
-    public static float getDeltaMovementLength(Entity entity, EntityFrameStateTracker<?> tracker) {
-        Vec3 deltaMovement = sanitize(entity.getDeltaMovement());
-        if (hasMovement(deltaMovement)) {
-            return (float) deltaMovement.length();
-        }
-        return (float) getPositionDelta(entity, tracker).length();
-    }
-
-    private static float getTimeDelta(EntityFrameStateTracker<?> tracker) {
         float timeDelta = tracker.getTimeDelta();
-        return Float.isFinite(timeDelta) && timeDelta > EPSILON ? timeDelta : 0.0f;
-    }
-
-    private static float getHorizontalSpeedFromDelta(Vec3 delta, EntityFrameStateTracker<?> tracker) {
-        float timeDelta = getTimeDelta(tracker);
-        if (timeDelta <= EPSILON) {
+        if (!Float.isFinite(timeDelta) || timeDelta <= EPSILON) {
             return 0.0f;
         }
-        return (20.0f * horizontalLength(delta)) / timeDelta;
-    }
-
-    private static float horizontalLength(Vec3 vec3) {
-        return Mth.sqrt((float) ((vec3.x * vec3.x) + (vec3.z * vec3.z)));
-    }
-
-    private static boolean hasMovement(Vec3 vec3) {
-        return vec3.lengthSqr() > EPSILON * EPSILON;
-    }
-
-    private static boolean isUsable(float value) {
-        return Float.isFinite(value) && value > EPSILON;
-    }
-
-    private static Vec3 sanitize(Vec3 vec3) {
-        return Double.isFinite(vec3.x) && Double.isFinite(vec3.y) && Double.isFinite(vec3.z) ? vec3 : Vec3.ZERO;
+        float speed = (20.0f * (float) tracker.getPositionDelta().y) / timeDelta;
+        return Float.isFinite(speed) ? speed : 0.0f;
     }
 }
