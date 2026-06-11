@@ -19,7 +19,7 @@ loom {
         client2 {
             client()
             runDir 'run/client_b'
-            programArgs '--username', 'tartaric_acid'
+            programArgs '--username', 'gushroom'
         }
     }
 }
